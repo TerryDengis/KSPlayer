@@ -12,7 +12,7 @@ let package = Package(
         .library(
             name: "KSPlayer",
             // todo clang: warning: using sysroot for 'iPhoneSimulator' but targeting 'MacOSX' [-Wincompatible-sysroot]
-//            type: .dynamic,
+            type: .dynamic,
             targets: ["KSPlayer"]
         ),
     ],
