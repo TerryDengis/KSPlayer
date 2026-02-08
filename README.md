@@ -1,7 +1,7 @@
 ![Build Status](https://img.shields.io/badge/build-%20passing%20-blue.svg)
 ![Platform](https://img.shields.io/badge/Platform-%20iOS%20macOS%20tvOS%20visionOS%20-blue.svg)
 ![License](https://img.shields.io/badge/license-GPL-blue.svg)
-# KSPlayer 
+# KSPlayer
 
 KSPlayer is a powerful media play framework for iOS, tvOS, macOS, xrOS, visionOS, Mac Catalyst. based on AVPlayer and FFmpeg, support AppKit/UIKit/SwiftUI.
 
@@ -14,21 +14,28 @@ If you have a commercial project that requires a custom player, or would like to
 - Email : kingslay@icloud.com
 
 ## License
-KSPlayer defaults to the GPL license (requires open-sourcing your own project code), and we hope everyone will consciously respect the licensing agreement of the KSPlayer project. Additionally, there is a paid version that adopts the LGPL license (contact us). 
+KSPlayer defaults to the GPL license (requires open-sourcing your own project code), and we hope everyone will consciously respect the licensing agreement of the KSPlayer project. Additionally, there is a paid version that adopts the LGPL license (contact us).
 
-If due to commercial reasons, you prefer not to adhere to the GPL license  or the LGPL license, you can contact us. Through our authorization, you can obtain a more flexible licensing agreement. 
+If due to commercial reasons, you prefer not to adhere to the GPL license  or the LGPL license, you can contact us. Through our authorization, you can obtain a more flexible licensing agreement.
 
 ## Features
-Functional differences between GPL version and LGPL version
+Functional differences between GPL version and LGPL version.
 Some features of the LGPL version require a one-time payment, which I have used 💰 to mark them out.
 
-| Feature     | LGPL      | GPL    | 
+To experience the powerful features of the LGPL version, you can download the app from the App Store. [App Store Link](https://apps.apple.com/app/tracyplayer/id6450770064)
+
+
+| Feature     | LGPL      | GPL    |
 | ----------- | --------- | ------ |
 |Dolby AC-4|✅|❌|
+|Swift Concurrency|✅|❌|
 |AV1 hardware decoding|✅|❌|
+|Word-by-word subtitles|✅|❌|
 |All demuxers, All decoders|✅|❌|
+|Use System Caption Appearance|✅|❌|
 |Record video clips at any time|✅|❌|
 |Smoothly Play 8K or 120 FPS Video|✅|❌|
+|Video download and format conversion|✅|❌|
 |External image subtitles, such as SUP|✅|❌|
 |Main subtitles and Secondary subtitles|✅|❌|
 |Picture in Picture supports subtitle display|✅|❌|
@@ -36,11 +43,13 @@ Some features of the LGPL version require a one-time payment, which I have used 
 |Use the fonts in the video to render subtitles|✅|❌|
 |Use memory cache for fast seek in short time range|✅|❌|
 |Full display of ass subtitles effect(Render as image using libass)|✅|❌|
-|FFmpeg version|8.0.0|6.1.0|
+|FFmpeg version|8.0.1|6.1.0|
+|Video upscaling |💰|❌|
+|Precache data to Hard Drive|💰|❌|
+|Video switching with zero delay|💰|❌|
 |Dovi P5 displays HDR (not overheating)|💰|❌|
 |Live streaming supports rewind viewing|💰|❌|
 |ISO Blu-ray disc playback on all Apple platforms|💰|❌|
-|Cache data to Hard Drive,Preload data to Hard Drive|💰|❌|
 |Simultaneous playback of separate audio and video URLs|💰|❌|
 |Offline AI real-time subtitle generation and translation|💰|❌|
 |Play videos in a small window in the App (resumable, supports macOS、iOS and tvOS)|💰|❌|
@@ -150,7 +159,7 @@ let res0 = KSPlayerResourceDefinition(url: URL(string: "http://clips.vorwaerts-g
                                       definition: "高清")
 let res1 = KSPlayerResourceDefinition(url: URL(string: "http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4")!,
                                       definition: "标清")
-   
+
 let asset = KSPlayerResource(name: "Big Buck Bunny",
                              definitions: [res0, res1],
                              cover: URL(string: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Big_buck_bunny_poster_big.jpg/848px-Big_buck_bunny_poster_big.jpg"))
@@ -200,7 +209,7 @@ public protocol PlayerControllerDelegate: class {
           super.updateUI(isLandscape: isLandscape)
           toolBar.playbackRateButton.isHidden = true
       }
-  
+
       override func onButtonPressed(type: PlayerButtonType, button: UIButton) {
           if type == .landscape {
               // Your own button press behaviour here
@@ -211,7 +220,7 @@ public protocol PlayerControllerDelegate: class {
   }
   ```
 
-  
+
 
 - ### Selecting Tracks
 
@@ -307,18 +316,17 @@ Any contributing and pull requests are warmly welcome. However, before you plan 
 
 ## Backers & Sponsors
 
-Open-source projects cannot live long without your help. If you find KSPlayer to be useful, please consider supporting this 
-project by becoming a sponsor. 
+Open-source projects cannot live long without your help. If you find KSPlayer to be useful, please consider supporting this
+project by becoming a sponsor.
 
 Become a sponsor through [GitHub Sponsors](https://github.com/sponsors/kingslay/). :heart:
 
-Your user icon or company logo shows up this with a link to your home page. 
-Name| App name | App Logo |
+Your user icon or company logo shows up this with a link to your home page.
+|Name| App name | App Logo |
 | ----------- | ----------- |----------- |
 |[UnknownCoder807](https://github.com/UnknownCoder807)|[Snappier](https://apps.apple.com/app/snappier-iptv/id1579702567)||
 |[skrew](https://github.com/skrew)||
 |[Kimentanm](https://github.com/Kimentanm)||
-|[byMohamedali](https://github.com/byMohamedali)||
 |[nakiostudio](https://github.com/nakiostudio)|[UHF](https://apps.apple.com/app/uhf-love-your-iptv/id6443751726)||
 |[CodingByJerez](https://github.com/CodingByJerez)||
 |[andrefmsilva](https://github.com/andrefmsilva)||
@@ -331,16 +339,23 @@ Name| App name | App Logo |
 |[nsplay1990](https://github.com/nsplay1990)||
 |[AppleChillVibez](https://github.com/AppleChillVibez)||
 |[stekc](https://github.com/stekc)||
-
-
+|[AstroChivs](https://github.com/AstroChivs)||
+|[bmob222](https://github.com/bmob222)||
+|[pateltejas](https://github.com/pateltejas)||
+|[ewanl2001](https://github.com/ewanl2001)||
+|[themisterholliday](https://github.com/themisterholliday)||
+|[JulienDev](https://github.com/JulienDev)||
+|[Sheinices](https://github.com/Sheinices)||
+|[Etheirystech](https://github.com/Etheirystech)||
+|[loicleser](https://github.com/loicleser)||
 
 
 Thanks to [nightfall708](https://github.com/nightfall708) for sponsoring a mac mini
 
-Thanks to [cdguy](https://github.com/cdguy) [UnknownCoder807](https://github.com/UnknownCoder807) [skrew](https://github.com/skrew) and LillyPlayer community for sponsoring a LG S95QR Sound Bar 
+Thanks to [cdguy](https://github.com/cdguy) [UnknownCoder807](https://github.com/UnknownCoder807) [skrew](https://github.com/skrew) and LillyPlayer community for sponsoring a LG S95QR Sound Bar
 
 Thanks to [skrew](https://github.com/skrew) and LillyPlayer community for sponsoring a 2022 Apple TV 4K
 
+Thanks to [bgoncal](https://github.com/bgoncal) for sponsoring a HomePod mini
 
 ![1](./Documents/Sponsors.jpg)
-
