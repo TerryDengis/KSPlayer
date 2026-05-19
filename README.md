@@ -32,7 +32,7 @@ To experience the powerful features of the LGPL version, you can download the ap
 |Precache data to Hard Drive|💰|❌|
 |Video switching with zero delay|💰|❌|
 |Audio Passthrough Output by Wi-Fi|💰|❌|
-|Dovi P5 displays HDR (not overheating)|💰|❌|
+|Dolby Vision P5、P8(dynamic metadata)|💰|❌|
 |Live streaming supports rewind viewing|💰|❌|
 |ISO Blu-ray disc playback on all Apple platforms|💰|❌|
 |Simultaneous playback of separate audio and video URLs|💰|❌|
@@ -43,6 +43,7 @@ To experience the powerful features of the LGPL version, you can download the ap
 |Swift Concurrency|✅|❌|
 |AV1 hardware decoding|✅|❌|
 |Word-by-word subtitles|✅|❌|
+|HDR10+(dynamic metadata)|✅|❌|
 |Text subtitle translation|✅|❌|
 |Use System Caption Appearance|✅|❌|
 |Record video clips at any time|✅|❌|
@@ -60,13 +61,13 @@ To experience the powerful features of the LGPL version, you can download the ap
 |Full display of ass subtitles effect(Render as image using libass)|✅|❌|
 |FFmpeg version|8.1.0|6.1.0|
 |Record video|✅|✅|
+|4k/HDR/HDR10|✅|✅|
 |360° panorama video|✅|✅|
 |Picture in Picture|✅|✅|
 |Hardware accelerator|✅|✅|
 |Seamless loop playback|✅|✅|
 |De-interlace auto detect|✅|✅|
 |Multichannel Audio/Spatial Audio|✅|✅|
-|4k/HDR/HDR10/HDR10+/Dolby Vision|✅|✅|
 |Custom url protocols such as nfs/smb/UPnP |✅|✅|
 |Text subtitle/Image subtitle/Closed Captions|✅|✅|
 |Search Online Subtitles(shooter/assrt/opensubtitles)|✅|✅|
