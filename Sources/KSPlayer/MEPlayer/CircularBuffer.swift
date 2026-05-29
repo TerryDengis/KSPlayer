@@ -46,16 +46,30 @@ public class CircularBuffer<Item: ObjectQueueItem> {
         if destroyed {
             return
         }
-        if _buffer[Int(tailIndex & mask)] != nil {
-            assertionFailure("value is not nil of headIndex: \(headIndex),tailIndex: \(tailIndex), bufferCount: \(_buffer.count), mask: \(mask)")
+        while _count >= maxCount {
+            if expanding {
+                // No more room left for another append so grow the buffer now.
+                _doubleCapacity()
+            } else {
+                condition.wait()
+                if destroyed {
+                    return
+                }
+            }
         }
-        _buffer[Int(tailIndex & mask)] = value
+
+        let tailBufferIndex = Int(tailIndex & mask)
+        if _buffer[tailBufferIndex] != nil {
+            logInconsistentBuffer("value is not nil of headIndex: \(headIndex),tailIndex: \(tailIndex), bufferCount: \(_buffer.count), mask: \(mask)")
+            _buffer[tailBufferIndex] = nil
+        }
+        _buffer[tailBufferIndex] = value
         if sorted {
             // 不用sort进行排序，这个比较高效
             var index = tailIndex
             while index > headIndex {
                 guard let item = _buffer[Int((index - 1) & mask)] else {
-                    assertionFailure("value is nil of index: \((index - 1) & mask) headIndex: \(headIndex),tailIndex: \(tailIndex), bufferCount: \(_buffer.count),  mask: \(mask)")
+                    logInconsistentBuffer("value is nil of index: \((index - 1) & mask) headIndex: \(headIndex),tailIndex: \(tailIndex), bufferCount: \(_buffer.count),  mask: \(mask)")
                     break
                 }
                 if item.timestamp <= _buffer[Int(index & mask)]!.timestamp {
@@ -66,18 +80,9 @@ public class CircularBuffer<Item: ObjectQueueItem> {
             }
         }
         tailIndex &+= 1
-        if _count >= maxCount {
-            if expanding {
-                // No more room left for another append so grow the buffer now.
-                _doubleCapacity()
-            } else {
-                condition.wait()
-            }
-        } else {
-            // 只有数据了。就signal。因为有可能这是最后的数据了。
-            if _count == 1 {
-                condition.signal()
-            }
+        // 只有数据了。就signal。因为有可能这是最后的数据了。
+        if _count == 1 {
+            condition.signal()
         }
     }
 
@@ -99,7 +104,11 @@ public class CircularBuffer<Item: ObjectQueueItem> {
         }
         let index = Int(headIndex & mask)
         guard let item = _buffer[index] else {
-            assertionFailure("value is nil of index: \(index) headIndex: \(headIndex),tailIndex: \(tailIndex), bufferCount: \(_buffer.count), mask: \(mask)")
+            logInconsistentBuffer("value is nil of index: \(index) headIndex: \(headIndex),tailIndex: \(tailIndex), bufferCount: \(_buffer.count), mask: \(mask)")
+            headIndex &+= 1
+            if _count == maxCount >> 1 {
+                condition.signal()
+            }
             return nil
         }
         if let predicate, !predicate(item, _count) {
@@ -127,8 +136,8 @@ public class CircularBuffer<Item: ObjectQueueItem> {
                     headIndex = i + 1
                 }
             } else {
-                assertionFailure("value is nil of index: \(i) headIndex: \(headIndex), tailIndex: \(tailIndex), bufferCount: \(_buffer.count), mask: \(mask)")
-                return result
+                logInconsistentBuffer("value is nil of index: \(i) headIndex: \(headIndex), tailIndex: \(tailIndex), bufferCount: \(_buffer.count), mask: \(mask)")
+                headIndex = i + 1
             }
             i += 1
         }
@@ -168,6 +177,10 @@ public class CircularBuffer<Item: ObjectQueueItem> {
         _buffer = newBacking
         maxCount = newCapacity
         mask = UInt(maxCount - 1)
+    }
+
+    private func logInconsistentBuffer(_ message: String) {
+        KSLog(NSError(description: "CircularBuffer recovered from inconsistent state: \(message)"))
     }
 }
 
