@@ -30,11 +30,12 @@ To experience the powerful features of the LGPL version, you can download the ap
 |Video upscaling |💰|❌|
 |ProgressBar Preview |💰|❌|
 |Precache data to Hard Drive|💰|❌|
+|Video output to another screen|💰|❌|
 |Video switching with zero delay|💰|❌|
 |Audio Passthrough Output by Wi-Fi|💰|❌|
 |Dolby Vision P5、P8(dynamic metadata)|💰|❌|
 |Live streaming supports rewind viewing|💰|❌|
-|ISO Blu-ray disc playback on all Apple platforms|💰|❌|
+|Blu-ray disc(ISO、DVD) playback on all Apple platforms|💰|❌|
 |Simultaneous playback of separate audio and video URLs|💰|❌|
 |Offline AI real-time subtitle generation and translation|💰|❌|
 |ProAVPlayer supports MKV, native Dolby Vision and Dolby Atmos.|💰|❌|
