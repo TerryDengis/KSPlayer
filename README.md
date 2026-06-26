@@ -3,7 +3,7 @@
 ![License](https://img.shields.io/badge/license-GPL-blue.svg)
 # KSPlayer
 
-KSPlayer is a powerful media play framework for iOS, tvOS, macOS, xrOS, visionOS, Mac Catalyst. based on AVPlayer and FFmpeg, support AppKit/UIKit/SwiftUI.
+KSPlayer is a powerful media play framework for iOS, tvOS, macOS, xrOS, visionOS, Mac Catalyst. based on AVPlayer and FFmpeg, support HLG、HDR10、 HDR10+、Dolby Vision、Dolby Atmos、Text/Image subtitle.
 
 English | [简体中文](./README_CN.md)
 
@@ -33,15 +33,16 @@ To experience the powerful features of the LGPL version, you can download the ap
 |Video output to another screen|💰|❌|
 |Video switching with zero delay|💰|❌|
 |Audio Passthrough Output by Wi-Fi|💰|❌|
-|Dolby Vision P5、P8(dynamic metadata)|💰|❌|
 |Live streaming supports rewind viewing|💰|❌|
 |Blu-ray disc(ISO、DVD) playback on all Apple platforms|💰|❌|
 |Simultaneous playback of separate audio and video URLs|💰|❌|
 |Offline AI real-time subtitle generation and translation|💰|❌|
 |ProAVPlayer supports MKV, native Dolby Vision and Dolby Atmos.|💰|❌|
+|Native Dolby Vision dynamic metadata. P5、P8、P7(show single-layer)|💰|❌|
 |Play videos in a small window in the App (resumable, supports iOS and tvOS)|💰|❌|
 |Dolby AC-4|✅|❌|
 |Swift Concurrency|✅|❌|
+|Hardware De-interlace|✅|❌|
 |AV1 hardware decoding|✅|❌|
 |Word-by-word subtitles|✅|❌|
 |HDR10+(dynamic metadata)|✅|❌|
@@ -60,7 +61,7 @@ To experience the powerful features of the LGPL version, you can download the ap
 |Use memory cache for fast seek in short time range|✅|❌|
 |KSMEPlayer supports all demuxing and decoding formats|✅|❌|
 |Full display of ass subtitles effect(Render as image using libass)|✅|❌|
-|FFmpeg version|8.1.0|6.1.0|
+|FFmpeg version|8.1.1|6.1.0|
 |Record video|✅|✅|
 |4k/HDR/HDR10|✅|✅|
 |360° panorama video|✅|✅|
