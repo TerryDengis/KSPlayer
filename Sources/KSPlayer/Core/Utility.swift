@@ -65,6 +65,36 @@ class GIFCreator: @unchecked Sendable {
     }
 }
 
+private final class GIFProgressState: @unchecked Sendable {
+    private let lock = NSLock()
+    private var completedCount = 0
+
+    func appendProgress() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        completedCount += 1
+        return completedCount
+    }
+}
+
+private final class MP4ExportContext: @unchecked Sendable {
+    let asset: AVAsset
+    let beginTime: TimeInterval
+    let endTime: TimeInterval
+    let outputURL: URL
+    let progress: @Sendable (Double) -> Void
+    let completion: @Sendable (Result<URL, Error>) -> Void
+
+    init(asset: AVAsset, beginTime: TimeInterval, endTime: TimeInterval, outputURL: URL, progress: @escaping @Sendable (Double) -> Void, completion: @escaping @Sendable (Result<URL, Error>) -> Void) {
+        self.asset = asset
+        self.beginTime = beginTime
+        self.endTime = endTime
+        self.outputURL = outputURL
+        self.progress = progress
+        self.completion = completion
+    }
+}
+
 public extension String {
     static func systemClockTime(second: Bool = false) -> String {
         let date = Date()
@@ -157,20 +187,20 @@ public extension UIColor {
 }
 
 extension AVAsset {
-    public func generateGIF(beginTime: TimeInterval, endTime: TimeInterval, interval: Double = 0.2, savePath: URL, progress: @escaping (Double) -> Void, completion: @escaping (Error?) -> Void) {
+    public func generateGIF(beginTime: TimeInterval, endTime: TimeInterval, interval: Double = 0.2, savePath: URL, progress: @escaping @Sendable (Double) -> Void, completion: @escaping @Sendable (Error?) -> Void) {
         let count = Int(ceil((endTime - beginTime) / interval))
         let timesM = (0 ..< count).map { NSValue(time: CMTime(seconds: beginTime + Double($0) * interval)) }
         let imageGenerator = createImageGenerator()
         let gifCreator = GIFCreator(savePath: savePath, imagesCount: count)
-        var i = 0
+        let progressState = GIFProgressState()
         imageGenerator.generateCGImagesAsynchronously(forTimes: timesM) { _, imageRef, _, result, error in
             switch result {
             case .succeeded:
                 guard let imageRef else { return }
-                i += 1
+                let completedCount = progressState.appendProgress()
                 gifCreator.add(image: imageRef)
-                progress(Double(i) / Double(count))
-                guard i == count else { return }
+                progress(Double(completedCount) / Double(count))
+                guard completedCount == count else { return }
                 if gifCreator.finalize() {
                     completion(nil)
                 } else {
@@ -222,22 +252,23 @@ extension AVAsset {
         return exportSession
     }
 
-    func exportMp4(beginTime: TimeInterval, endTime: TimeInterval, outputURL: URL, progress: @escaping (Double) -> Void, completion: @escaping (Result<URL, Error>) -> Void) throws {
+    func exportMp4(beginTime: TimeInterval, endTime: TimeInterval, outputURL: URL, progress: @escaping @Sendable (Double) -> Void, completion: @escaping @Sendable (Result<URL, Error>) -> Void) throws {
         try FileManager.default.removeItem(at: outputURL)
+        let context = MP4ExportContext(asset: self, beginTime: beginTime, endTime: endTime, outputURL: outputURL, progress: progress, completion: completion)
         Task {
-            guard let exportSession = try await createExportSession(beginTime: beginTime, endTime: endTime) else { return }
-            exportSession.outputURL = outputURL
+            guard let exportSession = try await context.asset.createExportSession(beginTime: context.beginTime, endTime: context.endTime) else { return }
+            exportSession.outputURL = context.outputURL
             await exportSession.export()
             switch exportSession.status {
             case .exporting:
-                progress(Double(exportSession.progress))
+                context.progress(Double(exportSession.progress))
             case .completed:
-                progress(1)
-                completion(.success(outputURL))
+                context.progress(1)
+                context.completion(.success(context.outputURL))
                 exportSession.cancelExport()
             case .failed:
                 if let error = exportSession.error {
-                    completion(.failure(error))
+                    context.completion(.failure(error))
                 }
                 exportSession.cancelExport()
             case .cancelled:
@@ -250,7 +281,7 @@ extension AVAsset {
         }
     }
 
-    func exportMp4(beginTime: TimeInterval, endTime: TimeInterval, progress: @escaping (Double) -> Void, completion: @escaping (Result<URL, Error>) -> Void) throws {
+    func exportMp4(beginTime: TimeInterval, endTime: TimeInterval, progress: @escaping @Sendable (Double) -> Void, completion: @escaping @Sendable (Result<URL, Error>) -> Void) throws {
         guard var exportURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
         exportURL = exportURL.appendingPathExtension("Export.mp4")
         try exportMp4(beginTime: beginTime, endTime: endTime, outputURL: exportURL, progress: progress, completion: completion)
@@ -412,17 +443,18 @@ public extension URL {
         }
     }
 
-    func download(userAgent: String? = nil, completion: @escaping ((String, URL) -> Void)) {
+    func download(userAgent: String? = nil, completion: @escaping @Sendable (String, URL) -> Void) {
         var request = URLRequest(url: self)
         if let userAgent {
             request.addValue(userAgent, forHTTPHeaderField: "User-Agent")
         }
+        let completionHandler = completion
         let task = URLSession.shared.downloadTask(with: request) { url, response, _ in
             guard let url, let response else {
                 return
             }
             // 下载的临时文件要马上就用。不然可能会马上被清空
-            completion(response.suggestedFilename ?? url.lastPathComponent, url)
+            completionHandler(response.suggestedFilename ?? url.lastPathComponent, url)
         }
         task.resume()
     }

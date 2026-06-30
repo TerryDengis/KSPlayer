@@ -21,6 +21,8 @@ class MetalRender {
         }
         return library
     }()
+    private static let yCbCrMatrix601 = vImage_YpCbCrToARGBMatrix(Kr: 0.299, Kb: 0.114)
+    private static let yCbCrMatrix709 = vImage_YpCbCrToARGBMatrix(Kr: 0.2126, Kb: 0.0722)
 
     private let renderPassDescriptor = MTLRenderPassDescriptor()
     private let commandQueue = MetalRender.device.makeCommandQueue()
@@ -31,13 +33,13 @@ class MetalRender {
         return MetalRender.device.makeSamplerState(descriptor: samplerDescriptor)
     }()
 
-    private lazy var colorConversion601VideoRangeMatrixBuffer: MTLBuffer? = kvImage_YpCbCrToARGBMatrix_ITU_R_601_4.pointee.videoRange.buffer
+    private lazy var colorConversion601VideoRangeMatrixBuffer: MTLBuffer? = MetalRender.yCbCrMatrix601.videoRange.buffer
 
-    private lazy var colorConversion601FullRangeMatrixBuffer: MTLBuffer? = kvImage_YpCbCrToARGBMatrix_ITU_R_601_4.pointee.buffer
+    private lazy var colorConversion601FullRangeMatrixBuffer: MTLBuffer? = MetalRender.yCbCrMatrix601.buffer
 
-    private lazy var colorConversion709VideoRangeMatrixBuffer: MTLBuffer? = kvImage_YpCbCrToARGBMatrix_ITU_R_709_2.pointee.videoRange.buffer
+    private lazy var colorConversion709VideoRangeMatrixBuffer: MTLBuffer? = MetalRender.yCbCrMatrix709.videoRange.buffer
 
-    private lazy var colorConversion709FullRangeMatrixBuffer: MTLBuffer? = kvImage_YpCbCrToARGBMatrix_ITU_R_709_2.pointee.buffer
+    private lazy var colorConversion709FullRangeMatrixBuffer: MTLBuffer? = MetalRender.yCbCrMatrix709.buffer
 
     private lazy var colorConversionSMPTE240MVideoRangeMatrixBuffer: MTLBuffer? = kvImage_YpCbCrToARGBMatrix_SMPTE_240M_1995.videoRange.buffer
 
@@ -181,8 +183,6 @@ class MetalRender {
 }
 
 // swiftlint:disable identifier_name
-// private let kvImage_YpCbCrToARGBMatrix_ITU_R_601_4 = vImage_YpCbCrToARGBMatrix(Kr: 0.299, Kb: 0.114)
-// private let kvImage_YpCbCrToARGBMatrix_ITU_R_709_2 = vImage_YpCbCrToARGBMatrix(Kr: 0.2126, Kb: 0.0722)
 private let kvImage_YpCbCrToARGBMatrix_SMPTE_240M_1995 = vImage_YpCbCrToARGBMatrix(Kr: 0.212, Kb: 0.087)
 private let kvImage_YpCbCrToARGBMatrix_ITU_R_2020 = vImage_YpCbCrToARGBMatrix(Kr: 0.2627, Kb: 0.0593)
 extension vImage_YpCbCrToARGBMatrix {

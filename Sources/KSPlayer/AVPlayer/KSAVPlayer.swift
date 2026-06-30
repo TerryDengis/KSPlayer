@@ -10,7 +10,7 @@ public typealias UIImage = NSImage
 import Combine
 import CoreGraphics
 
-public final class KSAVPlayerView: UIView {
+public final class KSAVPlayerView: UIView, @unchecked Sendable {
     public let player = AVQueuePlayer()
     override public init(frame: CGRect) {
         super.init(frame: frame)
@@ -66,7 +66,7 @@ public final class KSAVPlayerView: UIView {
 }
 
 @MainActor
-public class KSAVPlayer {
+public class KSAVPlayer: @unchecked Sendable {
     private var cancellable: AnyCancellable?
     private var options: KSOptions {
         didSet {
@@ -216,8 +216,10 @@ public class KSAVPlayer {
         urlAsset = AVURLAsset(url: url, options: options.avOptions)
         self.options = options
         itemObservation = player.observe(\.currentItem) { [weak self] player, _ in
-            guard let self else { return }
-            self.observer(playerItem: player.currentItem)
+            let currentItem = player.currentItem
+            Task { @MainActor [weak self] in
+                self?.observer(playerItem: currentItem)
+            }
         }
     }
 }
@@ -309,13 +311,20 @@ extension KSAVPlayer {
             }
             playerLooper = AVPlayerLooper(player: player, templateItem: playerItem)
             loopCountObservation = playerLooper?.observe(\.loopCount) { [weak self] playerLooper, _ in
-                guard let self else { return }
-                self.delegate?.playBack(player: self, loopCount: playerLooper.loopCount)
+                let loopCount = playerLooper.loopCount
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    self.delegate?.playBack(player: self, loopCount: loopCount)
+                }
             }
             loopStatusObservation = playerLooper?.observe(\.status) { [weak self] playerLooper, _ in
-                guard let self else { return }
-                if playerLooper.status == .failed {
-                    self.error = playerLooper.error
+                let status = playerLooper.status
+                let error = playerLooper.error
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    if status == .failed {
+                        self.error = error
+                    }
                 }
             }
         } else {
@@ -335,22 +344,26 @@ extension KSAVPlayer {
         NotificationCenter.default.addObserver(self, selector: #selector(moviePlayDidEnd), name: .AVPlayerItemDidPlayToEndTime, object: playerItem)
         NotificationCenter.default.addObserver(self, selector: #selector(playerItemFailedToPlayToEndTime), name: .AVPlayerItemFailedToPlayToEndTime, object: playerItem)
         statusObservation = playerItem.observe(\.status) { [weak self] item, _ in
-            guard let self else { return }
-            self.updateStatus(item: item)
+            Task { @MainActor [weak self] in
+                self?.updateStatus(item: item)
+            }
         }
         loadedTimeRangesObservation = playerItem.observe(\.loadedTimeRanges) { [weak self] item, _ in
-            guard let self else { return }
             // 计算缓冲进度
-            self.updatePlayableDuration(item: item)
+            Task { @MainActor [weak self] in
+                self?.updatePlayableDuration(item: item)
+            }
         }
 
-        let changeHandler: (AVPlayerItem, NSKeyValueObservedChange<Bool>) -> Void = { [weak self] _, _ in
-            guard let self else { return }
+        let changeHandler: @Sendable (AVPlayerItem, NSKeyValueObservedChange<Bool>) -> Void = { [weak self] item, _ in
             // 在主线程更新进度
-            if playerItem.isPlaybackBufferEmpty {
-                self.loadState = .loading
-            } else if playerItem.isPlaybackLikelyToKeepUp || playerItem.isPlaybackBufferFull {
-                self.loadState = .playable
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                if item.isPlaybackBufferEmpty {
+                    self.loadState = .loading
+                } else if item.isPlaybackLikelyToKeepUp || item.isPlaybackBufferFull {
+                    self.loadState = .playable
+                }
             }
         }
         bufferEmptyObservation = playerItem.observe(\.isPlaybackBufferEmpty, changeHandler: changeHandler)
@@ -359,7 +372,7 @@ extension KSAVPlayer {
     }
 }
 
-extension KSAVPlayer: MediaPlayerProtocol {
+extension KSAVPlayer: @preconcurrency MediaPlayerProtocol {
     public var subtitleDataSouce: SubtitleDataSouce? { nil }
     public var isPlaying: Bool { player.rate > 0 ? true : playbackState == .playing }
     public var view: UIView? { playerView }
@@ -396,19 +409,22 @@ extension KSAVPlayer: MediaPlayerProtocol {
         }
     }
 
-    public func seek(time: TimeInterval, completion: @escaping ((Bool) -> Void)) {
+    public func seek(time: TimeInterval, completion: @escaping @Sendable (Bool) -> Void) {
         let time = max(time, 0)
         shouldSeekTo = time
         playbackState = .seeking
+        let completionHandler = completion
         runOnMainThread { [weak self] in
             self?.bufferingProgress = 0
         }
         let tolerance: CMTime = options.isAccurateSeek ? .zero : .positiveInfinity
         player.seek(to: CMTime(seconds: time), toleranceBefore: tolerance, toleranceAfter: tolerance) {
             [weak self] finished in
-            guard let self else { return }
-            self.shouldSeekTo = 0
-            completion(finished)
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.shouldSeekTo = 0
+                completionHandler(finished)
+            }
         }
     }
 
@@ -511,7 +527,8 @@ extension AVAssetTrack {
     func toMediaPlayerTrack() {}
 }
 
-class AVMediaPlayerTrack: MediaPlayerTrack {
+@MainActor
+class AVMediaPlayerTrack: @unchecked Sendable, @preconcurrency MediaPlayerTrack {
     let formatDescription: CMFormatDescription?
     let description: String
     private let track: AVPlayerItemTrack
@@ -551,8 +568,8 @@ class AVMediaPlayerTrack: MediaPlayerTrack {
         isPlayable = track.assetTrack?.isPlayable ?? false
         #endif
         // swiftlint:disable force_cast
-        if let first = track.assetTrack?.formatDescriptions.first {
-            formatDescription = first as! CMFormatDescription
+        if let first = track.assetTrack?.formatDescriptions.first as! CMFormatDescription? {
+            formatDescription = first
         } else {
             formatDescription = nil
         }
@@ -577,7 +594,7 @@ public extension AVAsset {
         return imageGenerator
     }
 
-    func thumbnailImage(currentTime: CMTime, handler: @escaping (CGImage?) -> Void) {
+    func thumbnailImage(currentTime: CMTime, handler: @escaping @Sendable (CGImage?) -> Void) {
         let imageGenerator = createImageGenerator()
         imageGenerator.requestedTimeToleranceBefore = .zero
         imageGenerator.requestedTimeToleranceAfter = .zero

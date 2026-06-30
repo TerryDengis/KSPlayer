@@ -21,7 +21,7 @@ protocol PlayerItemTrackProtocol: CapacityProtocol, AnyObject {
     func shutdown()
 }
 
-class SyncPlayerItemTrack<Frame: MEFrame>: PlayerItemTrackProtocol, CustomStringConvertible {
+class SyncPlayerItemTrack<Frame: MEFrame>: PlayerItemTrackProtocol, CustomStringConvertible, @unchecked Sendable {
     var seekTime = 0.0
     fileprivate let options: KSOptions
     fileprivate var decoderMap = [Int32: DecodeProtocol]()
@@ -176,7 +176,7 @@ class SyncPlayerItemTrack<Frame: MEFrame>: PlayerItemTrackProtocol, CustomString
     }
 }
 
-final class AsyncPlayerItemTrack<Frame: MEFrame>: SyncPlayerItemTrack<Frame> {
+final class AsyncPlayerItemTrack<Frame: MEFrame>: SyncPlayerItemTrack<Frame>, @unchecked Sendable {
     private let operationQueue = OperationQueue()
     private var decodeOperation: BlockOperation!
     // 无缝播放使用的PacketQueue
@@ -290,9 +290,9 @@ public extension Dictionary {
     }
 }
 
-protocol DecodeProtocol {
+protocol DecodeProtocol: Sendable {
     func decode()
-    func decodeFrame(from packet: Packet, completionHandler: @escaping (Result<MEFrame, Error>) -> Void)
+    func decodeFrame(from packet: Packet, completionHandler: @escaping @Sendable (Result<MEFrame, Error>) -> Void)
     func doFlushCodec()
     func shutdown()
 }

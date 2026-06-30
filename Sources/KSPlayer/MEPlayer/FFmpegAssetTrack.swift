@@ -9,7 +9,7 @@ import AVFoundation
 import FFmpegKit
 import Libavformat
 
-public class FFmpegAssetTrack: MediaPlayerTrack {
+public class FFmpegAssetTrack: @unchecked Sendable, MediaPlayerTrack {
     public private(set) var trackID: Int32 = 0
     public let codecName: String
     public var name: String = ""

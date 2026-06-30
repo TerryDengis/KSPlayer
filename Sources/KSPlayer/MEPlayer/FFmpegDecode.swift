@@ -9,7 +9,7 @@ import AVFoundation
 import Foundation
 import Libavcodec
 
-class FFmpegDecode: DecodeProtocol {
+class FFmpegDecode: DecodeProtocol, @unchecked Sendable {
     private let options: KSOptions
     private var coreFrame: UnsafeMutablePointer<AVFrame>? = av_frame_alloc()
     private var codecContext: UnsafeMutablePointer<AVCodecContext>?
@@ -34,7 +34,7 @@ class FFmpegDecode: DecodeProtocol {
         }
     }
 
-    func decodeFrame(from packet: Packet, completionHandler: @escaping (Result<MEFrame, Error>) -> Void) {
+    func decodeFrame(from packet: Packet, completionHandler: @escaping @Sendable (Result<MEFrame, Error>) -> Void) {
         guard let codecContext, avcodec_send_packet(codecContext, packet.corePacket) == 0 else {
             return
         }
@@ -92,17 +92,17 @@ class FFmpegDecode: DecodeProtocol {
                                     options.sei(string: str)
                                 }
                             } else if sideData.type == AV_FRAME_DATA_DOVI_RPU_BUFFER {
-                                let data = sideData.data.withMemoryRebound(to: [UInt8].self, capacity: 1) { $0 }
+                                _ = sideData.data.withMemoryRebound(to: [UInt8].self, capacity: 1) { $0 }
                             } else if sideData.type == AV_FRAME_DATA_DOVI_METADATA { // AVDOVIMetadata
                                 let data = sideData.data.withMemoryRebound(to: AVDOVIMetadata.self, capacity: 1) { $0 }
-                                let header = av_dovi_get_header(data)
-                                let mapping = av_dovi_get_mapping(data)
-                                let color = av_dovi_get_color(data)
+                                _ = av_dovi_get_header(data)
+                                _ = av_dovi_get_mapping(data)
+                                _ = av_dovi_get_color(data)
 //                                frame.corePixelBuffer?.transferFunction = kCVImageBufferTransferFunction_ITU_R_2020
                             } else if sideData.type == AV_FRAME_DATA_DYNAMIC_HDR_PLUS { // AVDynamicHDRPlus
-                                let data = sideData.data.withMemoryRebound(to: AVDynamicHDRPlus.self, capacity: 1) { $0 }.pointee
+                                _ = sideData.data.withMemoryRebound(to: AVDynamicHDRPlus.self, capacity: 1) { $0 }.pointee
                             } else if sideData.type == AV_FRAME_DATA_DYNAMIC_HDR_VIVID { // AVDynamicHDRVivid
-                                let data = sideData.data.withMemoryRebound(to: AVDynamicHDRVivid.self, capacity: 1) { $0 }.pointee
+                                _ = sideData.data.withMemoryRebound(to: AVDynamicHDRVivid.self, capacity: 1) { $0 }.pointee
                             } else if sideData.type == AV_FRAME_DATA_MASTERING_DISPLAY_METADATA {
                                 let data = sideData.data.withMemoryRebound(to: AVMasteringDisplayMetadata.self, capacity: 1) { $0 }.pointee
                                 displayData = MasteringDisplayMetadata(

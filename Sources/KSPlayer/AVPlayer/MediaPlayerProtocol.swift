@@ -13,7 +13,7 @@ import UIKit
 import AppKit
 #endif
 
-public protocol MediaPlayback: AnyObject {
+public protocol MediaPlayback: AnyObject, Sendable {
     var duration: TimeInterval { get }
     var fileSize: Double { get }
     var naturalSize: CGSize { get }
@@ -21,14 +21,14 @@ public protocol MediaPlayback: AnyObject {
     var currentPlaybackTime: TimeInterval { get }
     func prepareToPlay()
     func shutdown()
-    func seek(time: TimeInterval, completion: @escaping ((Bool) -> Void))
+    func seek(time: TimeInterval, completion: @escaping @Sendable (Bool) -> Void)
 }
 
-public class DynamicInfo: ObservableObject {
-    private let metadataBlock: () -> [String: String]
-    private let bytesReadBlock: () -> Int64
-    private let audioBitrateBlock: () -> Int
-    private let videoBitrateBlock: () -> Int
+public class DynamicInfo: ObservableObject, @unchecked Sendable {
+    private let metadataBlock: @Sendable () -> [String: String]
+    private let bytesReadBlock: @Sendable () -> Int64
+    private let audioBitrateBlock: @Sendable () -> Int
+    private let videoBitrateBlock: @Sendable () -> Int
     public var metadata: [String: String] {
         metadataBlock()
     }
@@ -50,7 +50,7 @@ public class DynamicInfo: ObservableObject {
     public var audioVideoSyncDiff = 0.0
     public var droppedVideoFrameCount = UInt32(0)
     public var droppedVideoPacketCount = UInt32(0)
-    init(metadata: @escaping () -> [String: String], bytesRead: @escaping () -> Int64, audioBitrate: @escaping () -> Int, videoBitrate: @escaping () -> Int) {
+    init(metadata: @escaping @Sendable () -> [String: String], bytesRead: @escaping @Sendable () -> Int64, audioBitrate: @escaping @Sendable () -> Int, videoBitrate: @escaping @Sendable () -> Int) {
         metadataBlock = metadata
         bytesReadBlock = bytesRead
         audioBitrateBlock = audioBitrate
@@ -58,7 +58,7 @@ public class DynamicInfo: ObservableObject {
     }
 }
 
-public struct Chapter {
+public struct Chapter: Sendable {
     public let start: TimeInterval
     public let end: TimeInterval
     public let title: String
@@ -114,7 +114,7 @@ public protocol MediaPlayerDelegate: AnyObject {
     func finish(player: some MediaPlayerProtocol, error: Error?)
 }
 
-public protocol MediaPlayerTrack: AnyObject, CustomStringConvertible {
+public protocol MediaPlayerTrack: AnyObject, CustomStringConvertible, Sendable {
     var trackID: Int32 { get }
     var name: String { get }
     var languageCode: String? { get }

@@ -8,7 +8,7 @@
 import AVFoundation
 import Foundation
 
-public class AudioRendererPlayer: AudioOutput {
+public class AudioRendererPlayer: AudioOutput, @unchecked Sendable {
     public var playbackRate: Float = 1 {
         didSet {
             if !isPaused {

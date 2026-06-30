@@ -138,7 +138,7 @@ open class PlayerView: UIView, KSPlayerLayerDelegate, KSSliderDelegate {
         playerLayer?.pause()
     }
 
-    open func seek(time: TimeInterval, completion: @escaping ((Bool) -> Void)) {
+    open func seek(time: TimeInterval, completion: @escaping @Sendable (Bool) -> Void) {
         playerLayer?.seek(time: time, autoPlay: KSOptions.isSeekedAutoPlay, completion: completion)
     }
 
@@ -161,7 +161,9 @@ open class PlayerView: UIView, KSPlayerLayerDelegate, KSSliderDelegate {
             toolBar.currentTime = value
         } else if event == .touchUpInside {
             seek(time: value) { [weak self] _ in
-                self?.delegate?.playerController(seek: value)
+                runOnMainThread { [weak self] in
+                    self?.delegate?.playerController(seek: value)
+                }
             }
         }
     }

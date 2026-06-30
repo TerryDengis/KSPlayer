@@ -13,7 +13,7 @@ import UIKit
 #else
 import AppKit
 #endif
-class SubtitleDecode: DecodeProtocol {
+class SubtitleDecode: DecodeProtocol, @unchecked Sendable {
     private var codecContext: UnsafeMutablePointer<AVCodecContext>?
     private let scale = VideoSwresample(dstFormat: AV_PIX_FMT_ARGB, isDovi: false)
     private var subtitle = AVSubtitle()
@@ -34,7 +34,7 @@ class SubtitleDecode: DecodeProtocol {
 
     func decode() {}
 
-    func decodeFrame(from packet: Packet, completionHandler: @escaping (Result<MEFrame, Error>) -> Void) {
+    func decodeFrame(from packet: Packet, completionHandler: @escaping @Sendable (Result<MEFrame, Error>) -> Void) {
         guard let codecContext else {
             return
         }

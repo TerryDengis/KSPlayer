@@ -268,7 +268,7 @@ class AudioSwresample: FrameChange {
     }
 }
 
-public class AudioDescriptor: Equatable {
+public class AudioDescriptor: Equatable, @unchecked Sendable {
 //    static let defaultValue = AudioDescriptor()
     public let sampleRate: Int32
     public private(set) var audioFormat: AVAudioFormat

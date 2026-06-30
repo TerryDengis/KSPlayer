@@ -29,9 +29,7 @@ public class ThumbnailController {
     }
 
     public func generateThumbnail(for url: URL, thumbWidth: Int32 = 240) async throws -> [FFThumbnail] {
-        try await Task {
-            try getPeeks(for: url, thumbWidth: thumbWidth)
-        }.value
+        try getPeeks(for: url, thumbWidth: thumbWidth)
     }
 
     private func getPeeks(for url: URL, thumbWidth: Int32 = 240) throws -> [FFThumbnail] {

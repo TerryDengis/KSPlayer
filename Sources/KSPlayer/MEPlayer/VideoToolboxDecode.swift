@@ -10,7 +10,7 @@ import Libavformat
 #if canImport(VideoToolbox)
 import VideoToolbox
 
-class VideoToolboxDecode: DecodeProtocol {
+class VideoToolboxDecode: DecodeProtocol, @unchecked Sendable {
     private var session: DecompressionSession {
         didSet {
             VTDecompressionSessionInvalidate(oldValue.decompressionSession)
@@ -27,7 +27,7 @@ class VideoToolboxDecode: DecodeProtocol {
         self.session = session
     }
 
-    func decodeFrame(from packet: Packet, completionHandler: @escaping (Result<MEFrame, Error>) -> Void) {
+    func decodeFrame(from packet: Packet, completionHandler: @escaping @Sendable (Result<MEFrame, Error>) -> Void) {
         if needReconfig {
             // 解决从后台切换到前台，解码失败的问题
             session = DecompressionSession(assetTrack: session.assetTrack, options: options)!

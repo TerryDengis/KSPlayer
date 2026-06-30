@@ -502,9 +502,10 @@ extension MEPlayerItem {
                 }
                 isSeek = true
                 allPlayerItemTracks.forEach { $0.seek(time: seekToTime) }
-                DispatchQueue.main.async { [weak self] in
+                let seekResult = result
+                DispatchQueue.main.async { [weak self, seekResult] in
                     guard let self else { return }
-                    self.seekingCompletionHandler?(result >= 0)
+                    self.seekingCompletionHandler?(seekResult >= 0)
                     self.seekingCompletionHandler = nil
                 }
                 audioClock.time = CMTime(seconds: seekToTime, preferredTimescale: time.timescale) + startTime
@@ -675,7 +676,7 @@ extension MEPlayerItem: MediaPlayback {
         }
     }
 
-    public func seek(time: TimeInterval, completion: @escaping ((Bool) -> Void)) {
+    public func seek(time: TimeInterval, completion: @escaping @Sendable (Bool) -> Void) {
         if state == .reading || state == .paused {
             seekTime = time
             state = .seeking

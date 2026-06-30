@@ -9,7 +9,7 @@ import AudioToolbox
 import AVFAudio
 import CoreAudio
 
-public final class AudioGraphPlayer: AudioOutput, AudioDynamicsProcessor {
+public final class AudioGraphPlayer: AudioOutput, AudioDynamicsProcessor, @unchecked Sendable {
     public private(set) var audioUnitForDynamicsProcessor: AudioUnit
     private let graph: AUGraph
     private var audioUnitForMixer: AudioUnit!

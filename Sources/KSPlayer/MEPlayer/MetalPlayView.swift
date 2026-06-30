@@ -8,10 +8,11 @@
 import AVFoundation
 import Combine
 import CoreMedia
+@preconcurrency import ObjectiveC
 #if canImport(MetalKit)
 import MetalKit
 #endif
-public protocol DisplayLayerDelegate: NSObjectProtocol {
+public protocol DisplayLayerDelegate: NSObjectProtocol, Sendable {
     func change(displayLayer: AVSampleBufferDisplayLayer)
 }
 
@@ -25,7 +26,7 @@ public protocol VideoOutput: FrameOutput {
     func readNextFrame()
 }
 
-public final class MetalPlayView: UIView, VideoOutput {
+public final class MetalPlayView: UIView, @unchecked Sendable, @preconcurrency VideoOutput {
     public var displayLayer: AVSampleBufferDisplayLayer {
         displayView.displayLayer
     }
@@ -365,7 +366,7 @@ class AVSampleBufferDisplayView: UIView {
 #if os(macOS)
 import CoreVideo
 
-class CADisplayLink {
+class CADisplayLink: @unchecked Sendable {
     private let displayLink: CVDisplayLink
     private var runloop: RunLoop?
     private var mode = RunLoop.Mode.default
@@ -411,20 +412,22 @@ class CADisplayLink {
         var displayLink: CVDisplayLink?
         CVDisplayLinkCreateWithActiveCGDisplays(&displayLink)
         self.displayLink = displayLink!
+        let target = DisplayLinkTarget(target)
         CVDisplayLinkSetOutputHandler(self.displayLink) { [weak self] _, _, _, _, _ in
             guard let self else { return kCVReturnSuccess }
-            self.runloop?.perform(selector, target: target, argument: self, order: 0, modes: [self.mode])
+            self.runloop?.perform(selector, target: target.value, argument: self, order: 0, modes: [self.mode])
             return kCVReturnSuccess
         }
         CVDisplayLinkStart(self.displayLink)
     }
 
-    public init(block: @escaping (() -> Void)) {
+    public init(block: @escaping @Sendable () -> Void) {
         var displayLink: CVDisplayLink?
         CVDisplayLinkCreateWithActiveCGDisplays(&displayLink)
         self.displayLink = displayLink!
+        let blockHandler = block
         CVDisplayLinkSetOutputHandler(self.displayLink) { _, _, _, _, _ in
-            block()
+            blockHandler()
             return kCVReturnSuccess
         }
         CVDisplayLinkStart(self.displayLink)
@@ -441,6 +444,14 @@ class CADisplayLink {
         CVDisplayLinkSetOutputHandler(displayLink) { _, _, _, _, _ in
             kCVReturnError
         }
+    }
+}
+
+private final class DisplayLinkTarget: @unchecked Sendable {
+    let value: NSObject
+
+    init(_ value: NSObject) {
+        self.value = value
     }
 }
 #endif

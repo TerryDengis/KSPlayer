@@ -5,7 +5,7 @@
 //  Created by kintan on 2018/3/11.
 //
 
-import AVFoundation
+@preconcurrency import AVFoundation
 import CoreAudio
 
 public protocol AudioOutput: FrameOutput {
@@ -77,7 +77,7 @@ public extension AudioDynamicsProcessor {
     }
 }
 
-public final class AudioEngineDynamicsPlayer: AudioEnginePlayer, AudioDynamicsProcessor {
+public final class AudioEngineDynamicsPlayer: AudioEnginePlayer, AudioDynamicsProcessor, @unchecked Sendable {
     private let dynamicsProcessor = AVAudioUnitEffect(audioComponentDescription:
         AudioComponentDescription(componentType: kAudioUnitType_Effect,
                                   componentSubType: kAudioUnitSubType_DynamicsProcessor,
@@ -100,7 +100,7 @@ public final class AudioEngineDynamicsPlayer: AudioEnginePlayer, AudioDynamicsPr
     }
 }
 
-public class AudioEnginePlayer: AudioOutput {
+public class AudioEnginePlayer: AudioOutput, @unchecked Sendable {
     public let engine = AVAudioEngine()
     private var sourceNode: AVAudioSourceNode?
     private var sourceNodeAudioFormat: AVAudioFormat?

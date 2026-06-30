@@ -9,7 +9,7 @@ import AudioToolbox
 import AVFAudio
 import CoreAudio
 
-public final class AudioUnitPlayer: AudioOutput {
+public final class AudioUnitPlayer: AudioOutput, @unchecked Sendable {
     private var audioUnitForOutput: AudioUnit!
     private var currentRenderReadOffset = UInt32(0)
     private var sourceNodeAudioFormat: AVAudioFormat?

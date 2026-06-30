@@ -28,18 +28,18 @@ enum MESourceState {
 
 // MARK: delegate
 
-public protocol OutputRenderSourceDelegate: AnyObject {
+public protocol OutputRenderSourceDelegate: AnyObject, Sendable {
     func getVideoOutputRender(force: Bool) -> VideoVTBFrame?
     func getAudioOutputRender() -> AudioFrame?
     func setAudio(time: CMTime, position: Int64)
     func setVideo(time: CMTime, position: Int64)
 }
 
-protocol CodecCapacityDelegate: AnyObject {
+protocol CodecCapacityDelegate: AnyObject, Sendable {
     func codecDidFinished(track: some CapacityProtocol)
 }
 
-protocol MEPlayerDelegate: AnyObject {
+protocol MEPlayerDelegate: AnyObject, Sendable {
     func sourceDidChange(loadingState: LoadingState)
     func sourceDidOpened()
     func sourceDidFailed(error: NSError?)
@@ -49,7 +49,7 @@ protocol MEPlayerDelegate: AnyObject {
 
 // MARK: protocol
 
-public protocol ObjectQueueItem {
+public protocol ObjectQueueItem: Sendable {
     var timebase: Timebase { get }
     var timestamp: Int64 { get set }
     var duration: Int64 { get set }
@@ -63,14 +63,14 @@ extension ObjectQueueItem {
     var cmtime: CMTime { timebase.cmtime(for: timestamp) }
 }
 
-public protocol FrameOutput: AnyObject {
+public protocol FrameOutput: AnyObject, Sendable {
     var renderSource: OutputRenderSourceDelegate? { get set }
     func pause()
     func flush()
     func play()
 }
 
-protocol MEFrame: ObjectQueueItem {
+protocol MEFrame: ObjectQueueItem, Sendable {
     var timebase: Timebase { get set }
 }
 
@@ -192,7 +192,7 @@ extension Timebase {
     }
 }
 
-final class Packet: ObjectQueueItem {
+final class Packet: ObjectQueueItem, @unchecked Sendable {
     var duration: Int64 = 0
     var timestamp: Int64 = 0
     var position: Int64 = 0
@@ -228,7 +228,7 @@ final class Packet: ObjectQueueItem {
     }
 }
 
-final class SubtitleFrame: MEFrame {
+final class SubtitleFrame: MEFrame, @unchecked Sendable {
     var timestamp: Int64 = 0
     var timebase: Timebase
     var duration: Int64 = 0
@@ -241,7 +241,7 @@ final class SubtitleFrame: MEFrame {
     }
 }
 
-public final class AudioFrame: MEFrame {
+public final class AudioFrame: MEFrame, @unchecked Sendable {
     public let dataSize: Int
     public let audioFormat: AVAudioFormat
     public internal(set) var timebase = Timebase.defaultValue
@@ -417,7 +417,7 @@ public final class AudioFrame: MEFrame {
     }
 }
 
-public final class VideoVTBFrame: MEFrame {
+public final class VideoVTBFrame: MEFrame, @unchecked Sendable {
     public var timebase = Timebase.defaultValue
     // 交叉视频的duration会不准，直接减半了
     public var duration: Int64 = 0

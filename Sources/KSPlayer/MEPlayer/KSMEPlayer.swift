@@ -13,6 +13,18 @@ import UIKit
 import AppKit
 #endif
 
+private final class PlaybackCoordinatorCompletion: @unchecked Sendable {
+    private let handler: () -> Void
+
+    init(_ handler: @escaping () -> Void) {
+        self.handler = handler
+    }
+
+    func call() {
+        handler()
+    }
+}
+
 public class KSMEPlayer: NSObject, @unchecked Sendable {
     private var loopCount = 1
     private var playerItem: MEPlayerItem
@@ -151,7 +163,7 @@ public class KSMEPlayer: NSObject, @unchecked Sendable {
 
 private extension KSMEPlayer {
     func playOrPause() {
-        runOnMainThread { [weak self] in
+        runOnMainThread { [weak self, audioDescriptor] in
             guard let self else { return }
             let isPaused = !(self.playbackState == .playing && self.loadState == .playable)
             if isPaused {
@@ -270,9 +282,10 @@ extension KSMEPlayer: MEPlayerDelegate {
                 }
             }
             if playbackState == .playing {
-                runOnMainThread { [weak self] in
+                let bufferingProgress = progress
+                runOnMainThread { [weak self, bufferingProgress] in
                     // 在主线程更新进度
-                    self?.bufferingProgress = progress
+                    self?.bufferingProgress = bufferingProgress
                 }
             }
         }
@@ -288,7 +301,7 @@ extension KSMEPlayer: MEPlayerDelegate {
     }
 }
 
-extension KSMEPlayer: MediaPlayerProtocol {
+extension KSMEPlayer: @preconcurrency MediaPlayerProtocol {
     public var chapters: [Chapter] {
         playerItem.chapters
     }
@@ -352,7 +365,7 @@ extension KSMEPlayer: MediaPlayerProtocol {
         playerItem.dynamicInfo
     }
 
-    public func seek(time: TimeInterval, completion: @escaping ((Bool) -> Void)) {
+    public func seek(time: TimeInterval, completion: @escaping @Sendable (Bool) -> Void) {
         let time = max(time, 0)
         playbackState = .seeking
         runOnMainThread { [weak self] in
@@ -506,6 +519,7 @@ extension KSMEPlayer: AVPlaybackCoordinatorPlaybackControlDelegate {
             completionHandler()
             return
         }
+        let completion = PlaybackCoordinatorCompletion(completionHandler)
         DispatchQueue.main.async { [weak self] in
             guard let self else {
                 return
@@ -513,7 +527,7 @@ extension KSMEPlayer: AVPlaybackCoordinatorPlaybackControlDelegate {
             if self.playbackState != .playing {
                 self.play()
             }
-            completionHandler()
+            completion.call()
         }
     }
 
@@ -522,6 +536,7 @@ extension KSMEPlayer: AVPlaybackCoordinatorPlaybackControlDelegate {
             completionHandler()
             return
         }
+        let completion = PlaybackCoordinatorCompletion(completionHandler)
         DispatchQueue.main.async { [weak self] in
             guard let self else {
                 return
@@ -529,7 +544,7 @@ extension KSMEPlayer: AVPlaybackCoordinatorPlaybackControlDelegate {
             if self.playbackState != .paused {
                 self.pause()
             }
-            completionHandler()
+            completion.call()
         }
     }
 
@@ -549,18 +564,19 @@ extension KSMEPlayer: AVPlaybackCoordinatorPlaybackControlDelegate {
             completionHandler()
             return
         }
+        let completion = PlaybackCoordinatorCompletion(completionHandler)
         DispatchQueue.main.async { [weak self] in
             guard let self else {
                 return
             }
             guard self.loadState != .playable, let countDown = bufferingCommand.completionDueDate?.timeIntervalSinceNow else {
-                completionHandler()
+                completion.call()
                 return
             }
             self.bufferingCountDownTimer?.invalidate()
             self.bufferingCountDownTimer = nil
             self.bufferingCountDownTimer = Timer(timeInterval: countDown, repeats: false) { _ in
-                completionHandler()
+                completion.call()
             }
         }
     }

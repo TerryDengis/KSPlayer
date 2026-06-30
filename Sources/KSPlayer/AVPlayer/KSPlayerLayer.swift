@@ -23,7 +23,7 @@ import AppKit
  - playedToTheEnd: played to the End
  - error:          error with playing
  */
-public enum KSPlayerState: CustomStringConvertible {
+public enum KSPlayerState: CustomStringConvertible, Sendable {
     case initialized
     case preparing
     case readyToPlay
@@ -64,7 +64,7 @@ public protocol KSPlayerLayerDelegate: AnyObject {
     func player(layer: KSPlayerLayer, bufferedCount: Int, consumeTime: TimeInterval)
 }
 
-open class KSPlayerLayer: NSObject {
+open class KSPlayerLayer: NSObject, @unchecked Sendable {
     public weak var delegate: KSPlayerLayerDelegate?
     @Published
     public var bufferingProgress: Int = 0
@@ -97,9 +97,10 @@ open class KSPlayerLayer: NSObject {
         didSet {
             KSLog("player is \(player)")
             state = .initialized
-            runOnMainThread { [weak self] in
+            let oldPlayer = oldValue
+            runOnMainThread { [weak self, oldPlayer] in
                 guard let self else { return }
-                if let oldView = oldValue.view, let superview = oldView.superview, let view = player.view {
+                if let oldView = oldPlayer.view, let superview = oldView.superview, let view = player.view {
                     #if canImport(UIKit)
                     superview.insertSubview(view, belowSubview: oldView)
                     #else
@@ -113,7 +114,7 @@ open class KSPlayerLayer: NSObject {
                         view.trailingAnchor.constraint(equalTo: superview.trailingAnchor),
                     ])
                 }
-                oldValue.view?.removeFromSuperview()
+                oldPlayer.view?.removeFromSuperview()
             }
             player.playbackRate = oldValue.playbackRate
             player.playbackVolume = oldValue.playbackVolume
@@ -163,10 +164,11 @@ open class KSPlayerLayer: NSObject {
     public private(set) var state = KSPlayerState.initialized {
         willSet {
             if state != newValue {
-                runOnMainThread { [weak self] in
+                let nextState = newValue
+                runOnMainThread { [weak self, nextState] in
                     guard let self else { return }
-                    KSLog("playerStateDidChange - \(newValue)")
-                    self.delegate?.player(layer: self, state: newValue)
+                    KSLog("playerStateDidChange - \(nextState)")
+                    self.delegate?.player(layer: self, state: nextState)
                 }
             }
         }
@@ -176,7 +178,10 @@ open class KSPlayerLayer: NSObject {
         guard let self, self.player.isReadyToPlay else {
             return
         }
-        self.delegate?.player(layer: self, currentTime: self.player.currentPlaybackTime, totalTime: self.player.duration)
+        runOnMainThread { [weak self] in
+            guard let self else { return }
+            self.delegate?.player(layer: self, currentTime: self.player.currentPlaybackTime, totalTime: self.player.duration)
+        }
         if self.player.playbackState == .playing, self.player.loadState == .playable, self.state == .buffering {
             // 一个兜底保护，正常不能走到这里
             self.state = .bufferFinished
@@ -329,7 +334,7 @@ open class KSPlayerLayer: NSObject {
         }
     }
 
-    open func seek(time: TimeInterval, autoPlay: Bool, completion: @escaping ((Bool) -> Void)) {
+    open func seek(time: TimeInterval, autoPlay: Bool, completion: @escaping @Sendable (Bool) -> Void) {
         if time.isInfinite || time.isNaN {
             completion(false)
         }
@@ -485,7 +490,7 @@ extension KSPlayerLayer: AVPictureInPictureControllerDelegate {
 // MARK: - private functions
 
 extension KSPlayerLayer {
-    open func prepareToPlay() {
+    public func prepareToPlay() {
         state = .preparing
         startTime = CACurrentMediaTime()
         bufferedCount = 0
