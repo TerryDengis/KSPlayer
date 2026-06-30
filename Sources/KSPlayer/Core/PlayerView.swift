@@ -12,6 +12,18 @@ import AppKit
 #endif
 import AVFoundation
 
+private final class PlayerViewSeekCompletion: @unchecked Sendable {
+    private let completion: (Bool) -> Void
+
+    init(_ completion: @escaping (Bool) -> Void) {
+        self.completion = completion
+    }
+
+    func callAsFunction(_ finished: Bool) {
+        completion(finished)
+    }
+}
+
 public enum PlayerButtonType: Int {
     case play = 101
     case pause
@@ -138,8 +150,11 @@ open class PlayerView: UIView, KSPlayerLayerDelegate, KSSliderDelegate {
         playerLayer?.pause()
     }
 
-    open func seek(time: TimeInterval, completion: @escaping @Sendable (Bool) -> Void) {
-        playerLayer?.seek(time: time, autoPlay: KSOptions.isSeekedAutoPlay, completion: completion)
+    open func seek(time: TimeInterval, completion: @escaping (Bool) -> Void) {
+        let completion = PlayerViewSeekCompletion(completion)
+        playerLayer?.seek(time: time, autoPlay: KSOptions.isSeekedAutoPlay) { finished in
+            completion(finished)
+        }
     }
 
     open func resetPlayer() {
