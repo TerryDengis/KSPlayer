@@ -6,7 +6,7 @@
 //
 import Foundation
 
-public class EmptySubtitleInfo: SubtitleInfo {
+public class EmptySubtitleInfo: SubtitleInfo, @unchecked Sendable {
     public var isEnabled: Bool = true
     public let subtitleID: String = ""
     public var delay: TimeInterval = 0
@@ -16,7 +16,7 @@ public class EmptySubtitleInfo: SubtitleInfo {
     }
 }
 
-public class URLSubtitleInfo: KSSubtitle, SubtitleInfo {
+public class URLSubtitleInfo: KSSubtitle, SubtitleInfo, @unchecked Sendable {
     public var isEnabled: Bool = false {
         didSet {
             if isEnabled, parts.isEmpty {
@@ -60,7 +60,7 @@ public class URLSubtitleInfo: KSSubtitle, SubtitleInfo {
     }
 }
 
-public protocol SubtitleDataSouce: AnyObject {
+public protocol SubtitleDataSouce: AnyObject, Sendable {
     var infos: [any SubtitleInfo] { get }
 }
 
@@ -77,10 +77,10 @@ public protocol SearchSubtitleDataSouce: SubtitleDataSouce {
 }
 
 public extension KSOptions {
-    static var subtitleDataSouces: [SubtitleDataSouce] = [DirectorySubtitleDataSouce()]
+    nonisolated(unsafe) static var subtitleDataSouces: [SubtitleDataSouce] = [DirectorySubtitleDataSouce()]
 }
 
-public class PlistCacheSubtitleDataSouce: CacheSubtitleDataSouce {
+public class PlistCacheSubtitleDataSouce: CacheSubtitleDataSouce, @unchecked Sendable {
     public static let singleton = PlistCacheSubtitleDataSouce()
     public var infos = [any SubtitleInfo]()
     private let srtCacheInfoPath: String
@@ -133,14 +133,14 @@ public class PlistCacheSubtitleDataSouce: CacheSubtitleDataSouce {
     }
 }
 
-public class URLSubtitleDataSouce: SubtitleDataSouce {
+public class URLSubtitleDataSouce: SubtitleDataSouce, @unchecked Sendable {
     public var infos: [any SubtitleInfo]
     public init(urls: [URL]) {
         infos = urls.map { URLSubtitleInfo(url: $0) }
     }
 }
 
-public class DirectorySubtitleDataSouce: FileURLSubtitleDataSouce {
+public class DirectorySubtitleDataSouce: FileURLSubtitleDataSouce, @unchecked Sendable {
     public var infos = [any SubtitleInfo]()
     public init() {}
 
@@ -158,7 +158,7 @@ public class DirectorySubtitleDataSouce: FileURLSubtitleDataSouce {
     }
 }
 
-public class ShooterSubtitleDataSouce: FileURLSubtitleDataSouce {
+public class ShooterSubtitleDataSouce: FileURLSubtitleDataSouce, @unchecked Sendable {
     public var infos = [any SubtitleInfo]()
     public init() {}
     public func searchSubtitle(fileURL: URL?) async throws {
@@ -193,7 +193,7 @@ public class ShooterSubtitleDataSouce: FileURLSubtitleDataSouce {
     }
 }
 
-public class AssrtSubtitleDataSouce: SearchSubtitleDataSouce {
+public class AssrtSubtitleDataSouce: SearchSubtitleDataSouce, @unchecked Sendable {
     private let token: String
     public var infos = [any SubtitleInfo]()
     public init(token: String) {
@@ -263,7 +263,7 @@ public class AssrtSubtitleDataSouce: SearchSubtitleDataSouce {
     }
 }
 
-public class OpenSubtitleDataSouce: SearchSubtitleDataSouce {
+public class OpenSubtitleDataSouce: SearchSubtitleDataSouce, @unchecked Sendable {
     private var token: String? = nil
     private let username: String?
     private let password: String?

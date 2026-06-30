@@ -13,7 +13,7 @@ import UIKit
 import AppKit
 #endif
 
-public class KSMEPlayer: NSObject {
+public class KSMEPlayer: NSObject, @unchecked Sendable {
     private var loopCount = 1
     private var playerItem: MEPlayerItem
     public let audioOutput: AudioOutput

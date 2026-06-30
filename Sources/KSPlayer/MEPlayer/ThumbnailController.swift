@@ -12,7 +12,7 @@ import Libavformat
 #if canImport(UIKit)
 import UIKit
 #endif
-public struct FFThumbnail {
+public struct FFThumbnail: Sendable {
     public let image: UIImage
     public let time: TimeInterval
 }
@@ -69,7 +69,7 @@ public class ThumbnailController {
         if videoAvgFrameRate.den == 0 || av_q2d(videoAvgFrameRate) == 0 {
             throw NSError(description: "Avg frame rate = 0, ignore")
         }
-        var codecContext = try videoStream.pointee.codecpar.pointee.createContext(options: nil)
+        let codecContext = try videoStream.pointee.codecpar.pointee.createContext(options: nil)
         defer {
             avcodec_close(codecContext)
             var codecContext: UnsafeMutablePointer<AVCodecContext>? = codecContext

@@ -11,7 +11,7 @@ import CoreGraphics
 import Foundation
 import SwiftUI
 
-public class SubtitlePart: CustomStringConvertible, Identifiable {
+public class SubtitlePart: CustomStringConvertible, Identifiable, @unchecked Sendable {
     public var start: TimeInterval
     public var end: TimeInterval
     public var origin: CGPoint = .zero
@@ -36,7 +36,7 @@ public class SubtitlePart: CustomStringConvertible, Identifiable {
     }
 }
 
-public struct TextPosition {
+public struct TextPosition: Sendable {
     public var verticalAlign: VerticalAlignment = .bottom
     public var horizontalAlign: HorizontalAlignment = .center
     public var leftMargin: CGFloat = 0
@@ -230,7 +230,7 @@ extension Collection where Element: NumericComparable {
     }
 }
 
-open class SubtitleModel: ObservableObject {
+open class SubtitleModel: ObservableObject, @unchecked Sendable {
     public enum Size {
         case smaller
         case standard
@@ -277,17 +277,17 @@ open class SubtitleModel: ObservableObject {
         }
     }
 
-    public static var textColor: Color = .white
-    public static var textBackgroundColor: Color = .clear
+    nonisolated(unsafe) public static var textColor: Color = .white
+    nonisolated(unsafe) public static var textBackgroundColor: Color = .clear
     public static var textFont: UIFont {
         textBold ? .boldSystemFont(ofSize: textFontSize) : .systemFont(ofSize: textFontSize)
     }
 
-    public static var textFontSize = SubtitleModel.Size.standard.rawValue
-    public static var textBold = false
-    public static var textItalic = false
-    public static var textPosition = TextPosition()
-    public static var audioRecognizes = [any AudioRecognize]()
+    nonisolated(unsafe) public static var textFontSize = SubtitleModel.Size.standard.rawValue
+    nonisolated(unsafe) public static var textBold = false
+    nonisolated(unsafe) public static var textItalic = false
+    nonisolated(unsafe) public static var textPosition = TextPosition()
+    nonisolated(unsafe) public static var audioRecognizes = [any AudioRecognize]()
     private var subtitleDataSouces: [SubtitleDataSouce] = KSOptions.subtitleDataSouces
     @Published
     public private(set) var subtitleInfos = [any SubtitleInfo]()
