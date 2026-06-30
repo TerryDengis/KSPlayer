@@ -163,7 +163,7 @@ public class KSMEPlayer: NSObject, @unchecked Sendable {
 
 private extension KSMEPlayer {
     func playOrPause() {
-        runOnMainThread { [weak self, audioDescriptor] in
+        runOnMainThread { [weak self] in
             guard let self else { return }
             let isPaused = !(self.playbackState == .playing && self.loadState == .playable)
             if isPaused {
