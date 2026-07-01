@@ -260,27 +260,31 @@ extension AVAsset {
         try FileManager.default.removeItem(at: outputURL)
         let context = MP4ExportContext(asset: self, beginTime: beginTime, endTime: endTime, outputURL: outputURL, progress: progress, completion: completion)
         Task {
-            guard let exportSession = try await context.asset.createExportSession(beginTime: context.beginTime, endTime: context.endTime) else { return }
-            exportSession.outputURL = context.outputURL
-            await exportSession.export()
-            switch exportSession.status {
-            case .exporting:
-                context.progress(Double(exportSession.progress))
-            case .completed:
-                context.progress(1)
-                context.completion(.success(context.outputURL))
-                exportSession.cancelExport()
-            case .failed:
-                if let error = exportSession.error {
-                    context.completion(.failure(error))
+            do {
+                guard let exportSession = try await context.asset.createExportSession(beginTime: context.beginTime, endTime: context.endTime) else { return }
+                exportSession.outputURL = context.outputURL
+                await exportSession.export()
+                switch exportSession.status {
+                case .exporting:
+                    context.progress(Double(exportSession.progress))
+                case .completed:
+                    context.progress(1)
+                    context.completion(.success(context.outputURL))
+                    exportSession.cancelExport()
+                case .failed:
+                    if let error = exportSession.error {
+                        context.completion(.failure(error))
+                    }
+                    exportSession.cancelExport()
+                case .cancelled:
+                    exportSession.cancelExport()
+                case .unknown, .waiting:
+                    break
+                @unknown default:
+                    break
                 }
-                exportSession.cancelExport()
-            case .cancelled:
-                exportSession.cancelExport()
-            case .unknown, .waiting:
-                break
-            @unknown default:
-                break
+            } catch {
+                context.completion(.failure(error))
             }
         }
     }

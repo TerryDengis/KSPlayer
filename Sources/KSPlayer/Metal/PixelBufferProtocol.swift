@@ -40,6 +40,22 @@ extension PixelBufferProtocol {
     var size: CGSize { CGSize(width: width, height: height) }
 }
 
+private func copyPixelBufferAttachment(_ pixelBuffer: CVPixelBuffer, _ key: CFString) -> CFTypeRef? {
+    if #available(iOS 15.0, tvOS 15.0, macOS 12.0, *) {
+        return CVBufferCopyAttachment(pixelBuffer, key, nil)
+    } else {
+        return CVBufferGetAttachment(pixelBuffer, key, nil)?.takeUnretainedValue()
+    }
+}
+
+private func copyPixelBufferAttachments(_ pixelBuffer: CVPixelBuffer) -> CFDictionary? {
+    if #available(iOS 15.0, tvOS 15.0, macOS 12.0, *) {
+        return CVBufferCopyAttachments(pixelBuffer, .shouldPropagate)
+    } else {
+        return CVBufferGetAttachments(pixelBuffer, .shouldPropagate)
+    }
+}
+
 extension CVPixelBuffer: PixelBufferProtocol {
     public var leftShift: UInt8 { 0 }
     public var cvPixelBuffer: CVPixelBuffer? { self }
@@ -47,7 +63,7 @@ extension CVPixelBuffer: PixelBufferProtocol {
     public var height: Int { CVPixelBufferGetHeight(self) }
     public var aspectRatio: CGSize {
         get {
-            if let ratio = CVBufferGetAttachment(self, kCVImageBufferPixelAspectRatioKey, nil)?.takeUnretainedValue() as? NSDictionary,
+            if let ratio = copyPixelBufferAttachment(self, kCVImageBufferPixelAspectRatioKey) as? NSDictionary,
                let horizontal = (ratio[kCVImageBufferPixelAspectRatioHorizontalSpacingKey] as? NSNumber)?.intValue,
                let vertical = (ratio[kCVImageBufferPixelAspectRatioVerticalSpacingKey] as? NSNumber)?.intValue,
                horizontal > 0, vertical > 0
@@ -77,16 +93,16 @@ extension CVPixelBuffer: PixelBufferProtocol {
     }
 
     public var isFullRangeVideo: Bool {
-        CVBufferGetAttachment(self, kCMFormatDescriptionExtension_FullRangeVideo, nil)?.takeUnretainedValue() as? Bool ?? false
+        copyPixelBufferAttachment(self, kCMFormatDescriptionExtension_FullRangeVideo) as? Bool ?? false
     }
 
     public var attachmentsDic: CFDictionary? {
-        CVBufferGetAttachments(self, .shouldPropagate)
+        copyPixelBufferAttachments(self)
     }
 
     public var yCbCrMatrix: CFString? {
         get {
-            CVBufferGetAttachment(self, kCVImageBufferYCbCrMatrixKey, nil)?.takeUnretainedValue() as? NSString
+            copyPixelBufferAttachment(self, kCVImageBufferYCbCrMatrixKey) as? NSString
         }
         set {
             if let newValue {
@@ -97,7 +113,7 @@ extension CVPixelBuffer: PixelBufferProtocol {
 
     public var colorPrimaries: CFString? {
         get {
-            CVBufferGetAttachment(self, kCVImageBufferColorPrimariesKey, nil)?.takeUnretainedValue() as? NSString
+            copyPixelBufferAttachment(self, kCVImageBufferColorPrimariesKey) as? NSString
         }
         set {
             if let newValue {
@@ -108,7 +124,7 @@ extension CVPixelBuffer: PixelBufferProtocol {
 
     public var transferFunction: CFString? {
         get {
-            CVBufferGetAttachment(self, kCVImageBufferTransferFunctionKey, nil)?.takeUnretainedValue() as? NSString
+            copyPixelBufferAttachment(self, kCVImageBufferTransferFunctionKey) as? NSString
         }
         set {
             if let newValue {
