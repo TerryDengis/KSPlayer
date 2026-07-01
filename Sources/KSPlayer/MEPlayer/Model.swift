@@ -103,8 +103,6 @@ public extension KSOptions {
                 #elseif os(tvOS)
                 if #available(tvOS 14.0, *) {
                     return CGColorSpace(name: CGColorSpace.itur_2100_PQ)
-                } else if #available(tvOS 13.4, *) {
-                    return CGColorSpace(name: CGColorSpace.itur_2020_PQ)
                 } else {
                     return CGColorSpace(name: CGColorSpace.itur_2020_PQ_EOTF)
                 }
@@ -179,8 +177,6 @@ public extension KSOptions {
             #elseif os(tvOS)
             if #available(tvOS 14.0, *) {
                 return CGColorSpace(name: CGColorSpace.itur_2100_PQ)
-            } else if #available(tvOS 13.4, *) {
-                return CGColorSpace(name: CGColorSpace.itur_2020_PQ)
             } else {
                 return CGColorSpace(name: CGColorSpace.itur_2020_PQ_EOTF)
             }
