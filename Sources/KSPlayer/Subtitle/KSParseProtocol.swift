@@ -259,7 +259,11 @@ public extension [String: String] {
                 let matrix = CGAffineTransform(rotationAngle: radians)
                 #endif
                 let fontDescriptor = UIFontDescriptor(name: fontName, matrix: matrix)
+                #if canImport(AppKit)
                 font = UIFont(descriptor: fontDescriptor, size: fontSize) ?? font
+                #else
+                font = UIFont(descriptor: fontDescriptor, size: fontSize)
+                #endif
             }
             attributes[.font] = font
         }

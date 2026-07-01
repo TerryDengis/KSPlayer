@@ -16,9 +16,12 @@ open class BrightnessVolume {
         #if !os(tvOS) && !os(xrOS)
         brightnessObservation = UIScreen.main.observe(\.brightness, options: .new) { [weak self] _, change in
             guard KSOptions.enableBrightnessGestures else { return }
-            if let self, let value = change.newValue {
-                self.appearView()
-                self.progressView.setProgress(Float(value), type: 0)
+            if let value = change.newValue {
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    self.appearView()
+                    self.progressView.setProgress(Float(value), type: 0)
+                }
             }
         }
         #endif
@@ -63,6 +66,7 @@ open class BrightnessVolume {
     }
 }
 
+@MainActor
 public protocol BrightnessVolumeViewProtocol {
     // type: 0 brightness type: 1 volume
     func setProgress(_ progress: Float, type: UInt)

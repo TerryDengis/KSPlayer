@@ -528,28 +528,38 @@ public struct MenuView<Label, SelectionValue, Content>: View where Label: View, 
     @State
     private var showMenu = false
     public var body: some View {
+        #if os(tvOS)
         if #available(tvOS 17, *) {
-            Menu {
-                Picker(selection: selection) {
-                    content()
-                } label: {
-                    EmptyView()
-                }
-                .pickerStyle(.inline)
-            } label: {
-                label()
-            }
-            .menuIndicator(.hidden)
+            AnyView(tvOS17Menu)
         } else {
-            Picker(selection: selection, content: content, label: label)
-            #if !os(macOS)
-                .pickerStyle(.navigationLink)
-            #endif
-                .frame(height: 50)
-            #if os(tvOS)
-                .frame(width: 110)
-            #endif
+            AnyView(legacyPicker)
         }
+        #else
+        legacyPicker
+        #endif
+    }
+
+    @available(tvOS 17, *)
+    private var tvOS17Menu: some View {
+        Menu {
+            Picker(selection: selection) {
+                content()
+            } label: {
+                EmptyView()
+            }
+            .pickerStyle(.inline)
+        } label: {
+            label()
+        }
+        .menuIndicator(.hidden)
+    }
+
+    private var legacyPicker: some View {
+        Picker(selection: selection, content: content, label: label)
+            .frame(height: 50)
+        #if os(tvOS)
+            .frame(width: 110)
+        #endif
     }
 }
 

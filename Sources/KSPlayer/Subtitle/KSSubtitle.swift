@@ -235,6 +235,7 @@ open class SubtitleModel: ObservableObject, @unchecked Sendable {
         case smaller
         case standard
         case large
+        @MainActor
         public var rawValue: CGFloat {
             switch self {
             case .smaller:
@@ -243,7 +244,7 @@ open class SubtitleModel: ObservableObject, @unchecked Sendable {
                 #elseif os(macOS) || os(xrOS)
                 return 20
                 #else
-                if UI_USER_INTERFACE_IDIOM() == .phone {
+                if UIDevice.current.userInterfaceIdiom == .phone {
                     return 12
                 } else {
                     return 20
@@ -255,7 +256,7 @@ open class SubtitleModel: ObservableObject, @unchecked Sendable {
                 #elseif os(macOS) || os(xrOS)
                 return 26
                 #else
-                if UI_USER_INTERFACE_IDIOM() == .phone {
+                if UIDevice.current.userInterfaceIdiom == .phone {
                     return 16
                 } else {
                     return 26
@@ -267,7 +268,7 @@ open class SubtitleModel: ObservableObject, @unchecked Sendable {
                 #elseif os(macOS) || os(xrOS)
                 return 32
                 #else
-                if UI_USER_INTERFACE_IDIOM() == .phone {
+                if UIDevice.current.userInterfaceIdiom == .phone {
                     return 20
                 } else {
                     return 32
@@ -283,7 +284,13 @@ open class SubtitleModel: ObservableObject, @unchecked Sendable {
         textBold ? .boldSystemFont(ofSize: textFontSize) : .systemFont(ofSize: textFontSize)
     }
 
-    nonisolated(unsafe) public static var textFontSize = SubtitleModel.Size.standard.rawValue
+    #if os(tvOS) || os(xrOS)
+    nonisolated(unsafe) public static var textFontSize: CGFloat = 58
+    #elseif os(macOS)
+    nonisolated(unsafe) public static var textFontSize: CGFloat = 26
+    #else
+    nonisolated(unsafe) public static var textFontSize: CGFloat = 16
+    #endif
     nonisolated(unsafe) public static var textBold = false
     nonisolated(unsafe) public static var textItalic = false
     nonisolated(unsafe) public static var textPosition = TextPosition()

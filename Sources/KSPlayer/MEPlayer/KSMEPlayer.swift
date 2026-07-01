@@ -187,7 +187,7 @@ private extension KSMEPlayer {
     #if !os(macOS)
     @objc private func audioRouteChange(notification: Notification) {
         KSLog("[audio] audioRouteChange")
-        guard let reason = notification.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt else {
+        guard notification.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt != nil else {
             return
         }
 //        let routeChangeReason = AVAudioSession.RouteChangeReason(rawValue: reason)

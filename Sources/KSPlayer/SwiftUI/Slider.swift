@@ -68,7 +68,14 @@ public class TVSlide: UIControl {
     private var delayItem: DispatchWorkItem?
 
     private lazy var timer: Timer = .scheduledTimer(withTimeInterval: 0.15, repeats: true) { [weak self] _ in
-        guard let self, let moveDirection = self.moveDirection else {
+        Task { @MainActor [weak self] in
+            self?.repeatFocusedMove()
+        }
+    }
+
+    @MainActor
+    private func repeatFocusedMove() {
+        guard let moveDirection else {
             return
         }
         let rate = min(10, Int((CACurrentMediaTime() - self.pressTime) / 2) + 1)
