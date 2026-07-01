@@ -7,20 +7,26 @@
 
 import AVFoundation
 import CoreMedia
-import CoreServices
 #if canImport(UIKit)
 import UIKit
 
 public extension KSOptions {
     @MainActor
     static var windowScene: UIWindowScene? {
-        UIApplication.shared.connectedScenes.first as? UIWindowScene
+        UIApplication.shared.connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }
+            ?? UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
+    }
+
+    @MainActor
+    static var keyWindow: UIWindow? {
+        windowScene?.windows.first { $0.isKeyWindow } ?? windowScene?.windows.first
     }
 
     @MainActor
     static var sceneSize: CGSize {
-        let window = windowScene?.windows.first
-        return window?.bounds.size ?? .zero
+        keyWindow?.bounds.size ?? .zero
     }
 }
 #else

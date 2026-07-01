@@ -228,9 +228,7 @@ open class KSPlayerLayer: NSObject, @unchecked Sendable {
             NotificationCenter.default.addObserver(self, selector: #selector(enterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
             NotificationCenter.default.addObserver(self, selector: #selector(enterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
         }
-        #if !os(xrOS)
-        NotificationCenter.default.addObserver(self, selector: #selector(wirelessRouteActiveDidChange(notification:)), name: .MPVolumeViewWirelessRouteActiveDidChange, object: nil)
-        #endif
+        NotificationCenter.default.addObserver(self, selector: #selector(wirelessRouteActiveDidChange), name: AVAudioSession.routeChangeNotification, object: AVAudioSession.sharedInstance())
         #endif
         #if !os(macOS)
         NotificationCenter.default.addObserver(self, selector: #selector(audioInterrupted), name: AVAudioSession.interruptionNotification, object: nil)
@@ -670,17 +668,18 @@ extension KSPlayerLayer {
         }
     }
 
-    #if canImport(UIKit) && !os(xrOS)
+    #if canImport(UIKit)
     @MainActor
-    @objc private func wirelessRouteActiveDidChange(notification: Notification) {
-        guard let volumeView = notification.object as? MPVolumeView, isWirelessRouteActive != volumeView.isWirelessRouteActive else { return }
-        if volumeView.isWirelessRouteActive {
+    @objc private func wirelessRouteActiveDidChange() {
+        let isAirPlayRouteActive = AVAudioSession.sharedInstance().currentRoute.outputs.contains { $0.portType == .airPlay }
+        guard isWirelessRouteActive != isAirPlayRouteActive else { return }
+        if isAirPlayRouteActive {
             if !player.allowsExternalPlayback {
                 isWirelessRouteActive = true
             }
             player.usesExternalPlaybackWhileExternalScreenIsActive = true
         }
-        isWirelessRouteActive = volumeView.isWirelessRouteActive
+        isWirelessRouteActive = isAirPlayRouteActive
     }
     #endif
     #if !os(macOS)

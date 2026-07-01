@@ -8,14 +8,12 @@
 import AVFoundation
 import CryptoKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 #if canImport(UIKit)
 import UIKit
 #else
 import AppKit
-#endif
-#if canImport(MobileCoreServices)
-import MobileCoreServices.UTType
 #endif
 open class LayerContainerView: UIView {
     #if canImport(UIKit)
@@ -47,7 +45,13 @@ class GIFCreator: @unchecked Sendable {
     init(savePath: URL, imagesCount: Int) {
         try? FileManager.default.removeItem(at: savePath)
         frameProperties = [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFDelayTime: 0.25]] as CFDictionary
-        destination = CGImageDestinationCreateWithURL(savePath as CFURL, kUTTypeGIF, imagesCount, nil)!
+        let gifType: CFString
+        if #available(iOS 14.0, tvOS 14.0, macOS 11.0, *) {
+            gifType = UTType.gif.identifier as CFString
+        } else {
+            gifType = "com.compuserve.gif" as CFString
+        }
+        destination = CGImageDestinationCreateWithURL(savePath as CFURL, gifType, imagesCount, nil)!
         let fileProperties = [kCGImagePropertyGIFDictionary: [kCGImagePropertyGIFLoopCount: 0]]
         CGImageDestinationSetProperties(destination, fileProperties as CFDictionary)
     }
@@ -396,17 +400,21 @@ public func runOnMainThread(block: @escaping @MainActor @Sendable () -> Void) {
 
 public extension URL {
     var isMovie: Bool {
-        if let typeID = try? resourceValues(forKeys: [.typeIdentifierKey]).typeIdentifier as CFString? {
-            return UTTypeConformsTo(typeID, kUTTypeMovie)
+        if #available(iOS 14.0, tvOS 14.0, macOS 11.0, *),
+           let contentType = try? resourceValues(forKeys: [.contentTypeKey]).contentType
+        {
+            return contentType.conforms(to: .movie)
         }
-        return false
+        return ["3gp", "avi", "m4v", "mkv", "mov", "mp4", "mpeg", "mpg", "ts", "webm"].contains(pathExtension.lowercased())
     }
 
     var isAudio: Bool {
-        if let typeID = try? resourceValues(forKeys: [.typeIdentifierKey]).typeIdentifier as CFString? {
-            return UTTypeConformsTo(typeID, kUTTypeAudio)
+        if #available(iOS 14.0, tvOS 14.0, macOS 11.0, *),
+           let contentType = try? resourceValues(forKeys: [.contentTypeKey]).contentType
+        {
+            return contentType.conforms(to: .audio)
         }
-        return false
+        return ["aac", "aiff", "alac", "flac", "m4a", "mp3", "ogg", "wav", "wma"].contains(pathExtension.lowercased())
     }
 
     var isSubtitle: Bool {
@@ -783,8 +791,8 @@ extension CGImage {
 }
 
 public extension AVFileType {
-    static let png = AVFileType(kUTTypePNG as String)
-    static let jpeg2000 = AVFileType(kUTTypeJPEG2000 as String)
+    static let png = AVFileType("public.png")
+    static let jpeg2000 = AVFileType("public.jpeg-2000")
 }
 
 extension URL: @retroactive Identifiable {

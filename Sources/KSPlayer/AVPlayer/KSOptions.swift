@@ -342,7 +342,7 @@ open class KSOptions: @unchecked Sendable {
          快速更改preferredDisplayCriteria，会导致isDisplayModeSwitchInProgress变成true。
          例如退出一个视频，然后在3s内重新进入的话。所以不判断isDisplayModeSwitchInProgress了
          */
-        guard let displayManager = UIApplication.shared.windows.first?.avDisplayManager,
+        guard let displayManager = KSOptions.keyWindow?.avDisplayManager,
               displayManager.isDisplayCriteriaMatchingEnabled
         else {
             return
@@ -426,7 +426,7 @@ open class KSOptions: @unchecked Sendable {
     open func playerLayerDeinit() {
         #if os(tvOS) || os(xrOS)
         runOnMainThread {
-            UIApplication.shared.windows.first?.avDisplayManager.preferredDisplayCriteria = nil
+            KSOptions.keyWindow?.avDisplayManager.preferredDisplayCriteria = nil
         }
         #endif
     }

@@ -7,7 +7,7 @@
 #if canImport(UIKit) && canImport(CallKit)
 import AVKit
 import Combine
-import CoreServices
+import UniformTypeIdentifiers
 import MediaPlayer
 import UIKit
 
@@ -362,7 +362,7 @@ public extension KSOptions {
 
 extension UIApplication {
     static var isLandscape: Bool {
-        UIApplication.shared.windows.first?.windowScene?.interfaceOrientation.isLandscape ?? false
+        KSOptions.windowScene?.interfaceOrientation.isLandscape ?? false
     }
 }
 
@@ -381,9 +381,19 @@ extension IOSVideoPlayerView {
     }
 
     @objc fileprivate func openFileAction(_: AnyObject) {
-        let documentPicker = UIDocumentPickerViewController(documentTypes: [kUTTypeAudio, kUTTypeMovie, kUTTypePlainText] as [String], in: .open)
+        let documentPicker: UIDocumentPickerViewController
+        if #available(iOS 14.0, *) {
+            documentPicker = UIDocumentPickerViewController(forOpeningContentTypes: [.audio, .movie, .plainText])
+        } else {
+            documentPicker = IOSVideoPlayerView.legacyDocumentPicker()
+        }
         documentPicker.delegate = self
         viewController?.present(documentPicker, animated: true, completion: nil)
+    }
+
+    @available(iOS, introduced: 8.0, deprecated: 14.0)
+    private static func legacyDocumentPicker() -> UIDocumentPickerViewController {
+        UIDocumentPickerViewController(documentTypes: ["public.audio", "public.movie", "public.plain-text"], in: .open)
     }
 }
 
